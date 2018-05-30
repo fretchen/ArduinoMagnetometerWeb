@@ -127,11 +127,19 @@ $(document).ready(function() {
     x: [],
     y: [],
     name: 'Control',
-    type: 'scatter'
+    type: 'scatter',
+    yaxis: 'y2'
   };
 
   var data = [ setpoint_trace, input_trace, control_trace];
-  var layout = {};
+  var layout = {
+    yaxis2: {
+    title: 'Control',
+    overlaying: 'y',
+    side: 'right',
+    tickfont: {color: '#2ca02c'},
+    titlefont: {color: '#2ca02c'},
+  }};
 
   Plotly.newPlot('plot', data, layout);
 });
