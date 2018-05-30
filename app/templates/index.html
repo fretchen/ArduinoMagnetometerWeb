@@ -83,7 +83,6 @@ $(document).ready(function() {
       y:[[data[0]], [data[1]], [data[3]]]
     }, [0,1,2])
 
-    ard_log_exp.reset()
   });
 
   // Interval function that tests message latency by sending a "ping"
@@ -93,6 +92,10 @@ $(document).ready(function() {
     start_time = (new Date).getTime();
     socket.emit('my_ping');
   }, 1000);
+
+  window.setInterval(function() {
+    ard_log_exp.reset();
+  }, 10000);
   // Handler for the "pong" message. When the pong is received, the
   // time from the ping is stored, and the average of the last 30
   // samples is average and displayed.
