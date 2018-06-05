@@ -21,6 +21,12 @@
 <div class="row">
     <div class="col"> {{ wtf.quick_form(arduino_form, action="/arduino") }}</div>
   </div>
+  <div class="row">
+      <div class="col"> {{ wtf.quick_form(gform, action="/gain") }}</div>
+  </div>
+  <div class="row">
+      <div class="col"> {{ wtf.quick_form(iform, action="/integral") }}</div>
+  </div>
 </div>
 {% endblock %}
 

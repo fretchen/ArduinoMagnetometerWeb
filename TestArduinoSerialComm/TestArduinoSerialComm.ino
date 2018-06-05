@@ -4,6 +4,8 @@ long output;
 double setpoint;
 
 
+double kp, ki, kd, G, tau;
+
 char mode;   // for incoming serial data
 
 void setup()
@@ -12,6 +14,13 @@ void setup()
  randomSeed(analogRead(0));
 
   setpoint = 700;
+
+  ////////PID parameters
+  tau = 1000.;// in s and obtained from the time constant as we apply a step function
+  G = 1.; //gain that we want to use. We find it by adjusting it to be small enough such that the system is not oscillating
+  kp = G;
+  ki = G / tau;
+  kd = 0;
 }
 
 void loop() {
@@ -26,7 +35,11 @@ void loop() {
   Serial.print(", ");
   Serial.print(error);
   Serial.print(", ");
-  Serial.println(output, DEC);
+  Serial.print(output);
+  Serial.print(", ");
+  Serial.print(G);
+  Serial.print(", ");
+  Serial.println(tau, DEC);
   delay(1000);
 
   // send data only when you receive data:
@@ -38,6 +51,16 @@ void loop() {
       long out;
       setpoint = Serial.parseInt(); 
     }
-    }
+    if (mode == 'p') {
+      G = Serial.parseFloat(); 
+      kp = G;
+      ki = G / tau;
+      }
+    if (mode == 'i') {
+      tau = Serial.parseFloat(); 
+      kp = G;
+      ki = G / tau;
+      }
+  }
 
 }

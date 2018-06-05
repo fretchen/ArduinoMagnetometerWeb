@@ -1,5 +1,6 @@
 from app import app, socketio
-from app.forms import UpdateForm, DataForm, DisconnectForm, ConnectForm, UpdateArduinoForm
+from app.forms import UpdateForm, DisconnectForm, ConnectForm, UpdateArduinoForm
+from app.forms import UpdateGainForm, UpdateIntegralForm
 import serial
 import h5py
 import git
@@ -148,12 +149,14 @@ def config():
     dform = DisconnectForm()
     cform = ConnectForm()
     arduino_form = UpdateArduinoForm()
+    gform = UpdateGainForm()
+    iform = UpdateIntegralForm()
 
     global ssProto;
     conn_open = ssProto.connection_open()
 
     return render_template('config.html', port = port, form=uform, dform = dform,
-        cform = cform, conn_open = conn_open, arduino_form = arduino_form)
+        cform = cform, conn_open = conn_open, arduino_form = arduino_form, gform = gform, iform = iform)
 
 @app.route('/start', methods=['POST'])
 def start():
@@ -237,14 +240,81 @@ def arduino():
         return redirect(url_for('config'))
     else:
         port = app.config['SERIAL_PORT']
+
         uform = UpdateForm()
         dform = DisconnectForm()
         cform = ConnectForm()
+        gform = UpdateGainForm()
+        iform = UpdateIntegralForm()
 
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform)
+            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+
+@app.route('/gain', methods=['POST'])
+def gain():
+    '''
+    Configure the new gain for the arduino.
+    '''
+    gform = UpdateGainForm()
+    global ssProto
+
+    if gform.validate_on_submit():
+        n_gain =  gform.gain.data;
+        if ssProto.is_open():
+            o_str = 'p{}'.format(n_gain)
+            b = o_str.encode()
+            ssProto.serial.write(b)
+            flash('We set the gain to {}'.format(n_gain))
+        else:
+            flash('Serial port not open.', 'error')
+        return redirect(url_for('config'))
+    else:
+        port = app.config['SERIAL_PORT']
+        uform = UpdateForm()
+        dform = DisconnectForm()
+        cform = ConnectForm()
+
+        aform = UpdateArduinoForm()
+        iform = UpdateIntegralForm()
+
+        conn_open = ssProto.connection_open()
+
+        return render_template('config.html', port = port, form=uform, dform = dform,
+            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+
+@app.route('/integral', methods=['POST'])
+def integral():
+    '''
+    Configure the new gain for the arduino.
+    '''
+    iform = UpdateIntegralForm()
+    global ssProto
+
+    if iform.validate_on_submit():
+        n_tau =  iform.tau.data;
+        if ssProto.is_open():
+            o_str = 'i{}'.format(n_tau)
+            b = o_str.encode()
+            ssProto.serial.write(b)
+            flash('We set the integration time  to {} seconds'.format(n_tau))
+        else:
+            flash('Serial port not open.', 'error')
+        return redirect(url_for('config'))
+    else:
+        port = app.config['SERIAL_PORT']
+        uform = UpdateForm()
+        dform = DisconnectForm()
+        cform = ConnectForm()
+
+        aform = UpdateArduinoForm()
+        gform = UpdateGainForm()
+        conn_open = ssProto.connection_open()
+
+        return render_template('config.html', port = port, form=uform, dform = dform,
+            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+
 
 @app.route('/file/<filename>')
 def file(filename):
