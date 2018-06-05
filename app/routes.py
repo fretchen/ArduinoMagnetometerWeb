@@ -2,6 +2,8 @@ from app import app, socketio
 from app.forms import UpdateForm, DataForm, DisconnectForm, ConnectForm, UpdateArduinoForm
 import serial
 import h5py
+import git
+import numpy as np
 from flask import render_template, flash, redirect, url_for, session
 
 import time
@@ -127,6 +129,18 @@ def index():
     dform = DisconnectForm();
     return render_template('index.html', dform = dform, conn_open = conn_open)
 
+@app.context_processor
+def git_url():
+    '''
+    The main function for rendering the principal site.
+    '''
+    repo = git.Repo(search_parent_directories=True)
+    add =repo.remote().url
+    add_c = add.split('.git')[0];
+    comm = repo.head.object.hexsha;
+    return dict(git_url = add_c + '/tree/' + comm);
+
+
 @app.route('/config')
 def config():
     port = app.config['SERIAL_PORT']
@@ -244,9 +258,9 @@ def file(filename):
         with h5py.File(filename, "a") as f:
             if 'globals' in f.keys():
                 params = f['globals']
-                params.attrs['T_Verr'] = int(vals[0])
-                params.attrs['T_Vmeas'] = int(vals[1])
-                params.attrs['T_Vinp'] = int(vals[2])
+                params.attrs['T_Verr'] = np.float(vals[0])
+                params.attrs['T_Vmeas'] = np.float(vals[1])
+                params.attrs['T_Vinp'] = np.float(vals[2])
                 flash('Added the vals {} to the file {}'.format(ard_str, filename))
             else:
                 flash('The file {} did not have the global group yet.'.format(filename), 'error')
