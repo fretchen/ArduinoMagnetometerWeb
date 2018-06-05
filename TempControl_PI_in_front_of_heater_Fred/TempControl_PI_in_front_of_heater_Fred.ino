@@ -30,7 +30,7 @@ void setup()
 
   ////////PID parameters
   tau = 1000;// in s and obtained from the time constant as we apply a step function
-  G = 10; //gain that we want to use. We find it by adjusting it to be small enough such that the system is not oscillating
+  G = 1; //gain that we want to use. We find it by adjusting it to be small enough such that the system is not oscillating
   kp = G;
   ki = G / tau;
   kd = 0;
