@@ -108,19 +108,6 @@ void loop() {
   /////////// second part of the wavepacket control
   if (loopcount == nloopcount) {
     loopcount = 0;
-    Serial.print(setpoint);
-    Serial.print(", ");
-    Serial.print(input);
-    Serial.print(", ");
-    Serial.print(error);
-    Serial.print(", ");
-    Serial.print(output);
-    Serial.print(", ");
-    Serial.print(G);
-    Serial.print(", ");
-    Serial.print(tauI);
-    Serial.print(", ");
-    Serial.println(tauD, DEC);
     if (output > 0) {
       digitalWrite(outPin, HIGH);
       digitalWrite(outLEDPin, HIGH);
@@ -132,6 +119,22 @@ void loop() {
     // read the incoming byte:
     // say what you got:
     mode = Serial.read();
+    if (mode == 'w') {
+      // write the current state
+      Serial.print(setpoint);
+      Serial.print(", ");
+      Serial.print(input);
+      Serial.print(", ");
+      Serial.print(error);
+      Serial.print(", ");
+      Serial.print(output);
+      Serial.print(", ");
+      Serial.print(G);
+      Serial.print(", ");
+      Serial.print(tauI);
+      Serial.print(", ");
+      Serial.println(tauD, DEC);
+    }
     if (mode == 's') {
       long out;
       setpoint = Serial.parseInt();
