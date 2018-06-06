@@ -89,7 +89,7 @@ void loop() {
       double dErr = (error - lastErr) / timeChange;
 
       //compute PI output
-      output = kp * error + ki * errSum;
+      output = kp * error + ki * errSum + kd*dErr;
 
       //limit PID output to the bounds of the output
       if (output > nloopcount) output = nloopcount;
