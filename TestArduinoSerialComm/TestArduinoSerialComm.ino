@@ -15,8 +15,10 @@ void setup()
   setpoint = 700;
 
   ////////PID parameters
-  tauI = 1000.;// in s and obtained from the time constant as we apply a step function
+  
   G = 1.; //gain that we want to use. We find it by adjusting it to be small enough such that the system is not oscillating
+  tauI = 1000.;// in s and obtained from the time constant as we apply a step function
+  tauD = 0;
   kp = G;
   ki = G / tauI;
   kd = G * tauD;

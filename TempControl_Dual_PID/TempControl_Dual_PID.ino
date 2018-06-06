@@ -18,7 +18,7 @@ long inputspannung;
 unsigned long lastTime;
 double input, output, setpoint, error;
 double errSum, lastErr;
-double kp, ki, kd, G, tau;
+double kp, ki, kd, G, tauI, tauD;
 
 void setup()
 {
@@ -29,11 +29,12 @@ void setup()
   setpoint = 725;
 
   ////////PID parameters
-  tau = 1000;// in s and obtained from the time constant as we apply a step function
   G = 1; //gain that we want to use. We find it by adjusting it to be small enough such that the system is not oscillating
+  tauI = 1000;// in s and obtained from the time constant as we apply a step function
+  tauD = 0;
   kp = G;
-  ki = G / tau;
-  kd = 0;
+  ki = G / tauI;
+  kd = G*tauD;
 
   //initialize integrator
   errSum = 40 / nloopcount; // let the loop start at a nice value
@@ -113,7 +114,13 @@ void loop() {
     Serial.print(", ");
     Serial.print(error);
     Serial.print(", ");
-    Serial.println(output, DEC);
+    Serial.print(output);
+    Serial.print(", ");
+    Serial.print(G);
+    Serial.print(", ");
+    Serial.print(tauI);
+    Serial.print(", ");
+    Serial.println(tauD, DEC);
     if (output > 0) {
       digitalWrite(outPin, HIGH);
       digitalWrite(outLEDPin, HIGH);
@@ -129,5 +136,19 @@ void loop() {
       long out;
       setpoint = Serial.parseInt();
     }
+    if (mode == 'p') {
+      G = Serial.parseFloat();
+      kp = G;
+      ki = G / tauI;
+      kd = G * tauD;
+      }
+    if (mode == 'i') {
+      tauI = Serial.parseFloat();
+      ki = G / tauI;
+      }
+    if (mode == 'd') {
+        tauD = Serial.parseFloat();
+        kd = G*tauD;
+        }
   }
 }
