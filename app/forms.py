@@ -27,8 +27,15 @@ class UpdateIntegralForm(FlaskForm):
     '''
     The form for connecting to the Arduino
     '''
-    tau = FloatField('New time constant in seconds:', [DataRequired(), NumberRange(1)])
+    tau = FloatField('New tauI in seconds:', [DataRequired(), NumberRange(1)])
     submit = SubmitField('Update time constant')
+
+class UpdateDifferentialForm(FlaskForm):
+    '''
+    The form for connecting to the Arduino
+    '''
+    tau = FloatField('New tauD in seconds:', [DataRequired(), NumberRange(0)])
+    submit = SubmitField('Update tauD')
 
 class DisconnectForm(FlaskForm):
     '''

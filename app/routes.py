@@ -1,6 +1,6 @@
 from app import app, socketio
 from app.forms import UpdateForm, DisconnectForm, ConnectForm, UpdateArduinoForm
-from app.forms import UpdateGainForm, UpdateIntegralForm
+from app.forms import UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
 import serial
 import h5py
 import git
@@ -151,12 +151,14 @@ def config():
     arduino_form = UpdateArduinoForm()
     gform = UpdateGainForm()
     iform = UpdateIntegralForm()
+    diff_form = UpdateDifferentialForm()
 
     global ssProto;
     conn_open = ssProto.connection_open()
 
     return render_template('config.html', port = port, form=uform, dform = dform,
-        cform = cform, conn_open = conn_open, arduino_form = arduino_form, gform = gform, iform = iform)
+        cform = cform, conn_open = conn_open, arduino_form = arduino_form,
+        gform = gform, iform = iform,diff_form = diff_form);
 
 @app.route('/start', methods=['POST'])
 def start():
@@ -246,11 +248,13 @@ def arduino():
         cform = ConnectForm()
         gform = UpdateGainForm()
         iform = UpdateIntegralForm()
+        diff_form = UpdateDifferentialForm()
 
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+            cform = cform, conn_open = conn_open, arduino_form = aform,
+            gform = gform, iform = iform, diff_form = diff_form)
 
 @app.route('/gain', methods=['POST'])
 def gain():
@@ -278,11 +282,13 @@ def gain():
 
         aform = UpdateArduinoForm()
         iform = UpdateIntegralForm()
+        diff_form = UpdateDifferentialForm()
 
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+            cform = cform, conn_open = conn_open, arduino_form = aform,
+            gform = gform, iform = iform, diff_form = diff_form)
 
 @app.route('/integral', methods=['POST'])
 def integral():
@@ -310,11 +316,45 @@ def integral():
 
         aform = UpdateArduinoForm()
         gform = UpdateGainForm()
+        diff_form = UpdateDifferentialForm()
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform, gform = gform, iform = iform)
+            cform = cform, conn_open = conn_open, arduino_form = aform,
+            gform = gform, iform = iform, diff_form = diff_form)
 
+@app.route('/diff', methods=['POST'])
+def diff():
+    '''
+    Configure the new gain for the arduino.
+    '''
+    diff_form = UpdateDifferentialForm()
+    global ssProto
+
+    if diff_form.validate_on_submit():
+        n_tau =  diff_form.tau.data;
+        if ssProto.is_open():
+            o_str = 'd{}'.format(n_tau)
+            b = o_str.encode()
+            ssProto.serial.write(b)
+            flash('We set the differentiation time  to {} seconds'.format(n_tau))
+        else:
+            flash('Serial port not open.', 'error')
+        return redirect(url_for('config'))
+    else:
+        port = app.config['SERIAL_PORT']
+        uform = UpdateForm()
+        dform = DisconnectForm()
+        cform = ConnectForm()
+
+        aform = UpdateArduinoForm()
+        gform = UpdateGainForm()
+        iform = UpdateIntegralForm()
+        conn_open = ssProto.connection_open()
+
+        return render_template('config.html', port = port, form=uform, dform = dform,
+            cform = cform, conn_open = conn_open, arduino_form = aform,
+            gform = gform, iform = iform, diff_form = diff_form)
 
 @app.route('/file/<filename>')
 def file(filename):
