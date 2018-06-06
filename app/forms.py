@@ -9,6 +9,13 @@ class UpdateForm(FlaskForm):
     serial_port = StringField('Update to port:', validators=[DataRequired()])
     submit = SubmitField('Update port')
 
+class SerialWaitForm(FlaskForm):
+    '''
+    The form for connecting to the Arduino
+    '''
+    serial_time = StringField('Time between measurements:', validators=[DataRequired()])
+    submit = SubmitField('Update waiting time.')
+
 class UpdateArduinoForm(FlaskForm):
     '''
     The form for connecting to the Arduino

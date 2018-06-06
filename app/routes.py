@@ -1,6 +1,6 @@
 from app import app, socketio
-from app.forms import UpdateForm, DisconnectForm, ConnectForm, UpdateArduinoForm
-from app.forms import UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
+from app.forms import UpdateForm, DisconnectForm, ConnectForm, SerialWaitForm
+from app.forms import UpdateArduinoForm, UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
 import serial
 import h5py
 import git
@@ -114,7 +114,7 @@ class SerialSocketProtocol(object):
                 {'data': error_str, 'count': self.unit_of_work})
 
                 # important to use eventlet's sleep method
-            eventlet.sleep(3)
+            eventlet.sleep(app.config['SERIAL_TIME'])
 
 
 ssProto = SerialSocketProtocol(socketio)
@@ -145,9 +145,12 @@ def git_url():
 @app.route('/config')
 def config():
     port = app.config['SERIAL_PORT']
-    uform = UpdateForm()
     dform = DisconnectForm()
     cform = ConnectForm()
+
+    uform = UpdateForm()
+    wform = SerialWaitForm()
+
     arduino_form = UpdateArduinoForm()
     gform = UpdateGainForm()
     iform = UpdateIntegralForm()
@@ -158,7 +161,7 @@ def config():
 
     return render_template('config.html', port = port, form=uform, dform = dform,
         cform = cform, conn_open = conn_open, arduino_form = arduino_form,
-        gform = gform, iform = iform,diff_form = diff_form);
+        gform = gform, iform = iform,diff_form = diff_form, wform = wform);
 
 @app.route('/start', methods=['POST'])
 def start():
@@ -244,6 +247,8 @@ def arduino():
         port = app.config['SERIAL_PORT']
 
         uform = UpdateForm()
+
+        wform = SerialWaitForm()
         dform = DisconnectForm()
         cform = ConnectForm()
         gform = UpdateGainForm()
@@ -254,7 +259,7 @@ def arduino():
 
         return render_template('config.html', port = port, form=uform, dform = dform,
             cform = cform, conn_open = conn_open, arduino_form = aform,
-            gform = gform, iform = iform, diff_form = diff_form)
+            gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/gain', methods=['POST'])
 def gain():
@@ -277,6 +282,7 @@ def gain():
     else:
         port = app.config['SERIAL_PORT']
         uform = UpdateForm()
+        wform = SerialWaitForm()
         dform = DisconnectForm()
         cform = ConnectForm()
 
@@ -288,7 +294,7 @@ def gain():
 
         return render_template('config.html', port = port, form=uform, dform = dform,
             cform = cform, conn_open = conn_open, arduino_form = aform,
-            gform = gform, iform = iform, diff_form = diff_form)
+            gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/integral', methods=['POST'])
 def integral():
@@ -311,6 +317,7 @@ def integral():
     else:
         port = app.config['SERIAL_PORT']
         uform = UpdateForm()
+        wform = SerialWaitForm()
         dform = DisconnectForm()
         cform = ConnectForm()
 
@@ -321,7 +328,7 @@ def integral():
 
         return render_template('config.html', port = port, form=uform, dform = dform,
             cform = cform, conn_open = conn_open, arduino_form = aform,
-            gform = gform, iform = iform, diff_form = diff_form)
+            gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/diff', methods=['POST'])
 def diff():
@@ -344,6 +351,7 @@ def diff():
     else:
         port = app.config['SERIAL_PORT']
         uform = UpdateForm()
+        wform = SerialWaitForm()
         dform = DisconnectForm()
         cform = ConnectForm()
 
@@ -354,7 +362,7 @@ def diff():
 
         return render_template('config.html', port = port, form=uform, dform = dform,
             cform = cform, conn_open = conn_open, arduino_form = aform,
-            gform = gform, iform = iform, diff_form = diff_form)
+            gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/file/<filename>')
 def file(filename):
@@ -387,11 +395,12 @@ def get_arduino_data():
     global ssProto;
     global ard_str;
     ser = ssProto.serial;
+    # only read out on ask
+    o_str = 'w'
+    b = o_str.encode()
+    ssProto.serial.write(b);
     stream = ser.read(ser.in_waiting);
-    s_str = stream.decode(encoding='windows-1252');
     ard_str = stream.decode(encoding='windows-1252');
-    lines = s_str.split('\r\n');
-    ard_str = lines[0];
     timestamp = datetime.now().replace(microsecond=0).isoformat();
     return timestamp, ard_str
 
