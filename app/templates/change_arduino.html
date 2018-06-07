@@ -2,17 +2,6 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<a class="btn btn-default" id="add_arduino" href="{{url_for('add_arduino')}}"> Add another Arduino.</a>
-
-<div class="dropdown">
- <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">Configure Arduion #
- <span class="caret"></span></button>
- <ul class="dropdown-menu">
-     {% for ard in props %}
-      <li> <a href="{{url_for('change_arduino', ard_nr = ard.id)}}">#{{ ard.id }} - {{ ard.name }} </a></li>
-    {% endfor %}
- </ul>
-</div>
 <h1> Change parameters for # {{ard_nr}} - {{ name }} - listening on {{ port }}</h1>
 
 <div class="container">
@@ -33,7 +22,7 @@
 
 <h2>Update control parameters </h2>
 <div class="row">
-    <div class="col"> {{ wtf.quick_form(arduino_form, action="/arduino") }}</div>
+    <div class="col"> {{ wtf.quick_form(sform, action="/setpoint") }}</div>
   </div>
   <div class="row">
       <div class="col"> {{ wtf.quick_form(gform, action="/gain") }}</div>

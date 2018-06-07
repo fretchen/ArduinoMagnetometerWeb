@@ -24,9 +24,11 @@
       {% else %}
       <td class="bg-warning">Closed</td>
       {% endif %}
+      <td scope="col">{{ ard.setpoint }}</td>
       <td scope="col">Not implemented.</td>
-      <td scope="col">Not implemented.</td>
-      <td> <a class='btn btn-default' href="{{url_for('details', ard_nr = ard.id)}}">Details and later more.</a><td>
+      <td>
+        <a class='btn btn-default' href="{{url_for('change_arduino', ard_nr = ard.id)}}">Config</a>
+        <a class='btn btn-default' href="{{url_for('details', ard_nr = ard.id)}}">Details</a><td>
     </tr>
     {% endfor %}
  </tbody>

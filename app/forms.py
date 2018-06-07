@@ -6,7 +6,7 @@ class UpdateForm(FlaskForm):
     '''
     The form for connecting to the Arduino
     '''
-    id = HiddenField('A hidden field')
+    id = HiddenField('A hidden field');
     serial_port = StringField('Update to port:', validators=[DataRequired()])
     submit = SubmitField('Update port')
 
@@ -17,10 +17,11 @@ class SerialWaitForm(FlaskForm):
     serial_time = StringField('Time between measurements:', validators=[DataRequired()])
     submit = SubmitField('Update waiting time.')
 
-class UpdateArduinoForm(FlaskForm):
+class UpdateSetpointForm(FlaskForm):
     '''
     The form for connecting to the Arduino
     '''
+    id = HiddenField('A hidden field');
     setpoint = IntegerField('New setpoint:', [DataRequired(), NumberRange(0,1023)])
     submit = SubmitField('Update setpoint')
 

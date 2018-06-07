@@ -1,6 +1,6 @@
 from app import app, socketio
 from app.forms import UpdateForm, DisconnectForm, ConnectForm, SerialWaitForm, ReConnectForm
-from app.forms import UpdateArduinoForm, UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
+from app.forms import UpdateSetpointForm, UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
 import serial
 import h5py
 import git
@@ -29,7 +29,8 @@ class SerialSocketProtocol(object):
     switch = False
     unit_of_work = 0
     name = ''
-    id = 0
+    id = 0;
+    setpoint = 0;
 
     def __init__(self, socketio):
         """
@@ -165,7 +166,7 @@ def index():
     props = [];
     for ii, arduino in enumerate(arduinos):
         dict = {'name': arduino.name, 'id': ii, 'port': arduino.serial.port,
-        'active': arduino.connection_open()};
+        'active': arduino.connection_open(), 'setpoint': arduino.setpoint};
         props.append(dict)
 
     return render_template('index.html',n_ards = n_ards, props = props);
@@ -249,12 +250,12 @@ def change_arduino(ard_nr):
     uform = UpdateForm(id=ard_nr)
     wform = SerialWaitForm()
 
-    arduino_form = UpdateArduinoForm()
+    sform = UpdateSetpointForm(id=ard_nr)
     gform = UpdateGainForm()
     iform = UpdateIntegralForm()
     diff_form = UpdateDifferentialForm()
     return render_template('change_arduino.html', port = port, name = name, ard_nr = ard_nr,
-        form=uform, dform = dform, cform = cform, conn_open = conn_open, arduino_form = arduino_form,
+        form=uform, dform = dform, cform = cform, conn_open = conn_open, sform = sform,
         gform = gform, iform = iform,diff_form = diff_form, wform = wform, props=props);
 
 @app.route('/add_arduino', methods=['GET', 'POST'])
@@ -369,25 +370,26 @@ def update():
         flash('Update of the serial port went wrong', 'error')
         return redirect(url_for('config'))
 
-@app.route('/arduino', methods=['POST'])
+@app.route('/setpoint', methods=['POST'])
 def arduino():
     '''
     Configure now settings for the arduino.
     '''
-    aform = UpdateArduinoForm()
+    sform = UpdateSetpointForm()
     global arduinos
-    if arduinos:
-        ssProto = arduinos[0];
-    else:
+    if not arduinos:
         flash('No arduino yet.', 'error')
         return redirect(url_for('config'))
 
-    if aform.validate_on_submit():
-        n_setpoint =  aform.setpoint.data;
+    id = int(sform.id.data);
+    if sform.validate_on_submit():
+        n_setpoint =  sform.setpoint.data;
+        ssProto = arduinos[id];
         if ssProto.is_open():
             o_str = 's{}'.format(n_setpoint)
             b = o_str.encode()
             ssProto.serial.write(b)
+            ssProto.setpoint = n_setpoint;
             flash('We set the setpoint to {}'.format(n_setpoint))
         else:
             flash('Serial port not open.', 'error')
@@ -395,8 +397,7 @@ def arduino():
     else:
         port = app.config['SERIAL_PORT']
 
-        uform = Form()
-
+        uform = UpdateForm()
         wform = SerialWaitForm()
         dform = DisconnectForm()
         cform = ReConnectForm()
@@ -407,7 +408,7 @@ def arduino():
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform,
+            cform = cform, conn_open = conn_open, sform = sform,
             gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/gain', methods=['POST'])
@@ -440,14 +441,14 @@ def gain():
         dform = DisconnectForm()
         cform = ReConnectForm()
 
-        aform = UpdateArduinoForm()
+        sform = UpdateSetpointForm()
         iform = UpdateIntegralForm()
         diff_form = UpdateDifferentialForm()
 
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform,
+            cform = cform, conn_open = conn_open, sform = sform,
             gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/integral', methods=['POST'])
@@ -480,13 +481,13 @@ def integral():
         dform = DisconnectForm()
         cform = ReConnectForm()
 
-        aform = UpdateArduinoForm()
+        sform = UpdateSetpointForm()
         gform = UpdateGainForm()
         diff_form = UpdateDifferentialForm()
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform,
+            cform = cform, conn_open = conn_open, sform = sform,
             gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/diff', methods=['POST'])
@@ -519,13 +520,13 @@ def diff():
         dform = DisconnectForm()
         cform = ReConnectForm()
 
-        aform = UpdateArduinoForm()
+        sform = UpdateSetpointForm()
         gform = UpdateGainForm()
         iform = UpdateIntegralForm()
         conn_open = ssProto.connection_open()
 
         return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, arduino_form = aform,
+            cform = cform, conn_open = conn_open, sform = sform,
             gform = gform, iform = iform, diff_form = diff_form, wform = wform)
 
 @app.route('/file/<filename>')
