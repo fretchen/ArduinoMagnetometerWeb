@@ -28,6 +28,7 @@ class SerialSocketProtocol(object):
     serial = None
     switch = False
     unit_of_work = 0
+    name = ''
 
     def __init__(self, socketio):
         """
@@ -36,6 +37,15 @@ class SerialSocketProtocol(object):
         self.serial = serial.Serial()
         self.switch = False
         self.socketio = socketio
+
+    def __init__(self, socketio, name):
+        """
+        assign socketio object to emit
+        """
+        self.serial = serial.Serial()
+        self.switch = False
+        self.socketio = socketio
+        self.name = name;
 
     def is_open(self):
         '''
@@ -61,6 +71,8 @@ class SerialSocketProtocol(object):
         """
         self.switch = False
         self.unit_of_work = 0
+        if self.is_open():
+            self.serial.close()
 
     def start(self):
         """
@@ -72,7 +84,6 @@ class SerialSocketProtocol(object):
             else:
                 self.switch = True
                 thread = self.socketio.start_background_task(target=self.do_work)
-                print('Started')
         else:
             print('Already running')
 
@@ -98,7 +109,6 @@ class SerialSocketProtocol(object):
 
             if self.is_open():
                 try:
-                    print('Trying to get data.')
                     timestamp, ard_str = self.pull_data()
 
                     vals = ard_str.split(',');
@@ -144,7 +154,6 @@ def index():
     if arduinos:
         ssProto = arduinos[0];#TODO has to be cleaned up.
         conn_open = ssProto.connection_open()
-        print(arduinos[0].is_open())
     else:
         print('No arduino connected yet')
         conn_open = False
@@ -206,8 +215,10 @@ def add_arduino():
         return redirect(url_for('config'))
 
     if cform.validate_on_submit():
-        ssProto = SerialSocketProtocol(socketio)
         n_port =  cform.serial_port.data;
+        name = cform.name.data;
+        ssProto = SerialSocketProtocol(socketio, name);
+
         try:
             ssProto.open_serial(n_port, 9600, timeout = 1)
             ssProto.start()
@@ -274,29 +285,25 @@ def update():
     '''
     Update the serial port.
     '''
-    uform = UpdateForm()
     global arduinos;
 
-    if arduinos:
-        ssProto = arduinos[0];
-    else:
-        ssProto = SerialSocketProtocol(socketio)
+    if not arduinos:
+        flash('Create an arduino first.', 'error');
+        return redirect(url_for('config'));
+
+    ssProto = arduinos[0];
+    uform = UpdateForm();
 
     if uform.validate_on_submit():
         n_port =  uform.serial_port.data;
         try:
-
+            if ssProto.connection_open():
+                ssProto.stop()
             ssProto.open_serial(n_port, 9600, timeout = 1)
             ssProto.start()
             if ssProto.is_open():
                 app.config['SERIAL_PORT'] = n_port;
-                if not arduinos:
-                    arduinos.append(ssProto)
-                    print('We created a new connection, which is {}'.format(arduinos[0].connection_open()))
-                    flash('We created a new connection on {}'.format(app.config['SERIAL_PORT']))
-                else:
-                    flash('We updated the serial port too {}'.format(app.config['SERIAL_PORT']))
-
+                flash('We updated the serial port too {}'.format(app.config['SERIAL_PORT']))
                 return redirect(url_for('index'))
             else:
                  flash('Update of the serial port went wrong', 'error')
