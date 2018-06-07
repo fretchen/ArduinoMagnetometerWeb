@@ -1,5 +1,5 @@
 from app import app, socketio
-from app.forms import UpdateForm, DisconnectForm, ConnectForm, SerialWaitForm
+from app.forms import UpdateForm, DisconnectForm, ConnectForm, SerialWaitForm, ReConnectForm
 from app.forms import UpdateArduinoForm, UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
 import serial
 import h5py
@@ -173,7 +173,7 @@ def config():
     n_ards = len(arduinos)
     port = app.config['SERIAL_PORT']
     dform = DisconnectForm()
-    cform = ConnectForm()
+    cform = ReConnectForm()
 
     uform = UpdateForm()
     wform = SerialWaitForm()
@@ -229,7 +229,7 @@ def add_arduino():
 @app.route('/start', methods=['POST'])
 def start():
 
-    cform = ConnectForm()
+    cform = ReConnectForm()
 
     global arduinos;
     if arduinos:
@@ -327,7 +327,7 @@ def arduino():
             o_str = 's{}'.format(n_setpoint)
             b = o_str.encode()
             ssProto.serial.write(b)
-            flash('We set the serial port to {}'.format(n_setpoint))
+            flash('We set the setpoint to {}'.format(n_setpoint))
         else:
             flash('Serial port not open.', 'error')
         return redirect(url_for('config'))
@@ -338,7 +338,7 @@ def arduino():
 
         wform = SerialWaitForm()
         dform = DisconnectForm()
-        cform = ConnectForm()
+        cform = ReConnectForm()
         gform = UpdateGainForm()
         iform = UpdateIntegralForm()
         diff_form = UpdateDifferentialForm()
@@ -377,7 +377,7 @@ def gain():
         uform = UpdateForm()
         wform = SerialWaitForm()
         dform = DisconnectForm()
-        cform = ConnectForm()
+        cform = ReConnectForm()
 
         aform = UpdateArduinoForm()
         iform = UpdateIntegralForm()
@@ -417,7 +417,7 @@ def integral():
         uform = UpdateForm()
         wform = SerialWaitForm()
         dform = DisconnectForm()
-        cform = ConnectForm()
+        cform = ReConnectForm()
 
         aform = UpdateArduinoForm()
         gform = UpdateGainForm()
@@ -456,7 +456,7 @@ def diff():
         uform = UpdateForm()
         wform = SerialWaitForm()
         dform = DisconnectForm()
-        cform = ConnectForm()
+        cform = ReConnectForm()
 
         aform = UpdateArduinoForm()
         gform = UpdateGainForm()
