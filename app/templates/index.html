@@ -74,11 +74,11 @@ $(document).ready(function() {
     ard_log_str = ard_log_str + '<td>' + msg.time +'</td>';
     for (var i=0; i<data.length; i++){
 
-        ard_log_str = ard_log_str + '<td>' + data[i] +'</td>';
+      ard_log_str = ard_log_str + '<td>' + data[i] +'</td>';
     }
     ard_log_str = ard_log_str + '</tr>'
 
-      $('#ard_log > tbody').prepend(ard_log_str).html()
+    $('#ard_log > tbody').prepend(ard_log_str).html()
 
     Plotly.extendTraces('plot', {
       x:[[time], [time], [time]],
@@ -131,38 +131,28 @@ $(document).ready(function() {
 
     // Lanzamos
     downloadLink.click();
-}
+  }
 
-function export_table_to_csv(html, filename) {
-	var csv = [];
-	var rows = document.querySelectorAll("table tr");
+  function export_table_to_csv(html, filename) {
+    var csv = [];
+    var rows = document.querySelectorAll("table tr");
 
     for (var i = 0; i < rows.length; i++) {
-		var row = [], cols = rows[i].querySelectorAll("td, th");
+      var row = [], cols = rows[i].querySelectorAll("td, th");
 
-        for (var j = 0; j < cols.length; j++)
-            row.push(cols[j].innerText);
+      for (var j = 0; j < cols.length; j++)
+      row.push(cols[j].innerText);
 
-		csv.push(row.join(","));
-	}
+      csv.push(row.join(","));
+    }
 
     // Download CSV
     download_csv(csv.join("\n"), filename);
-}
-
-document.querySelector("button").addEventListener("click", function () {
-    var html = document.querySelector("table").outerHTML;
-	export_table_to_csv(html, "table.csv");
-});
-
-  // $( "#exp_button" ).click(function() {
-  //   ard_log_exp.reset();
-  //   $( "#ard_log_exp" ).ready(function() {
-  //     var exportData = ard_log_exp.getExportData()['ard_log']['csv'];
-  //     ard_log_exp.export2file(exportData.data, exportData.mimeType, exportData.filename, exportData.fileExtension);
-  //   })
-  //   alert( "Handler for .click() called." );
-  // });
+  }
+  $( "#exp_button" ).click(function() {
+    var html = $("#ard_log").outerHTML;
+    export_table_to_csv(html, "table.csv");
+  });
 
   // set up the plotting
   var setpoint_trace = {
@@ -190,14 +180,14 @@ document.querySelector("button").addEventListener("click", function () {
   var data = [ setpoint_trace, input_trace, control_trace];
   var layout = {
     yaxis2: {
-    title: 'Control',
-    overlaying: 'y',
-    side: 'right',
-    tickfont: {color: '#2ca02c'},
-    titlefont: {color: '#2ca02c'},
-  }};
+      title: 'Control',
+      overlaying: 'y',
+      side: 'right',
+      tickfont: {color: '#2ca02c'},
+      titlefont: {color: '#2ca02c'},
+    }};
 
-  Plotly.newPlot('plot', data, layout);
-});
+    Plotly.newPlot('plot', data, layout);
+  });
 </script>
 {% endblock %}
