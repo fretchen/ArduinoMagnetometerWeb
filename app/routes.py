@@ -91,10 +91,7 @@ class SerialSocketProtocol(object):
         """
         open the serial port
         """
-        if self.is_open():
-            self.serial.close()
-        else:
-            self.serial = serial.Serial(port, 9600, timeout = 1)
+        self.serial = serial.Serial(port, 9600, timeout = 1)
 
     def do_work(self):
         """
@@ -202,17 +199,13 @@ def config():
         gform = gform, iform = iform,diff_form = diff_form, wform = wform, n_ards = n_ards);
 
 
-@app.route('/add_arduino', methods=['POST'])
+@app.route('/add_arduino', methods=['GET', 'POST'])
 def add_arduino():
     '''
     Add an arduino to the set up
     '''
     global arduinos;
     cform = ConnectForm();
-
-    if arduinos:
-        flash('We already have an arduino installed.', 'error')
-        return redirect(url_for('config'))
 
     if cform.validate_on_submit():
         n_port =  cform.serial_port.data;
@@ -233,9 +226,10 @@ def add_arduino():
         except Exception as e:
              flash('{}'.format(e), 'error')
              return redirect(url_for('config'))
-    else:
-        flash('Adding the Arduino went wrong', 'error')
-        return redirect(url_for('config'))
+
+    port = app.config['SERIAL_PORT']
+    n_ards = len(arduinos)
+    return render_template('add_arduino.html', port = port, cform = cform, n_ards=n_ards);
 
 @app.route('/start', methods=['POST'])
 def start():

@@ -3,6 +3,9 @@
 
 {% block app_content %}
 You have currently {{ n_ards }} arduinos that you might connect too.
+
+<a class="btn btn-default" id="add_arduino" href="{{url_for('add_arduino')}}"> Add another Arduino.</a>
+
 <div class="container">
   <div class="row">
     {% if conn_open %}
@@ -50,6 +53,11 @@ $(document).ready(function() {
   // Event handler for new connections.
   socket.on('connect', function() {
     socket.emit('my_response', {data: 'I\'m connected!'});
+  });
+
+  $( "#add_arduino" ).click(function() {
+    var html = $("#ard_log").outerHTML;
+    export_table_to_csv(html, "table.csv");
   });
 });
 </script>
