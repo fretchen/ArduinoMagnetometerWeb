@@ -22,7 +22,10 @@ def test_serial():
                 ard_str = ard_str + ',' + str(gain) + ',' + str(tauI) +',' + str(tauD) + '\r\n'
                 out = ard_str.encode('windows-1252')
                 os.write(master, out)
-                print('And wrote something master')
+            if mode == b's':
+                set = os.read(master, 20);
+                setpoint = int(set.decode('windows-1252'));
+                print('s{}'.format(setpoint));
         time.sleep(0.1)
 if __name__=='__main__':
     test_serial()
