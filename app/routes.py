@@ -235,15 +235,9 @@ def change_arduino(ard_nr):
         return redirect(url_for('config'))
 
     n_ards = len(arduinos);
-    props = [];
-    for ii, arduino in enumerate(arduinos):
-        dict = {'name': arduino.name, 'id': ii};
-        props.append(dict)
     arduino = arduinos[int(ard_nr)];
-    name = arduino.name;
-    port = arduino.serial.port;
-    conn_open = arduino.connection_open()
-
+    props = {'name': arduino.name, 'id': int(ard_nr), 'port': arduino.serial.port,
+            'active': arduino.connection_open(), 'setpoint': arduino.setpoint};
     dform = DisconnectForm()
     cform = ReConnectForm()
 
@@ -254,8 +248,8 @@ def change_arduino(ard_nr):
     gform = UpdateGainForm()
     iform = UpdateIntegralForm()
     diff_form = UpdateDifferentialForm()
-    return render_template('change_arduino.html', port = port, name = name, ard_nr = ard_nr,
-        form=uform, dform = dform, cform = cform, conn_open = conn_open, sform = sform,
+    return render_template('change_arduino.html',
+        form=uform, dform = dform, cform = cform,  sform = sform,
         gform = gform, iform = iform,diff_form = diff_form, wform = wform, props=props);
 
 @app.route('/add_arduino', methods=['GET', 'POST'])

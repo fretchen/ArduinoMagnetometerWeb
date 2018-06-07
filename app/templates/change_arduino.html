@@ -2,18 +2,37 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-<h1> Change parameters for # {{ard_nr}} - {{ name }} - listening on {{ port }}</h1>
-
-<div class="container">
-  <div class="row">
-    {% if conn_open %}
-    <div class="col bg-success">The connection is established. </div>
-    <div class="col"> {{ wtf.quick_form(dform, id="stop", action="/stop") }} </div>
-    {% else %}
-    <div class="col bg-warning">The connection is closed.</div>
-    <div class="col-sm"> {{ wtf.quick_form(cform, id="connect", action="/start") }} </div>
-    {% endif %}
-  </div>
+<h1> Change parameters</h1>
+<table class="table" id ="arduino overview">
+  <thead>
+  <tr>
+    <th scope="col">#</th>
+    <th scope="col">Name</th>
+    <th scope="col">Port</th>
+    <th scope="col">Status</th>
+    <th scope="col">Setpoint</th>
+    <th scope="col">Current Value</th>
+    <th scope="col">Other actions </th>
+  </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>{{ props.id }}</td>
+      <td>{{ props.name }}</td>
+      <td>{{ props.port }}</td>
+      {% if props.active %}
+      <td class="bg-success">Open</td>
+      {% else %}
+      <td class="bg-warning">Closed</td>
+      {% endif %}
+      <td scope="col">{{ props.setpoint }}</td>
+      <td scope="col">Not implemented.</td>
+      <td>
+        <a class='btn btn-default' href="{{url_for('details', ard_nr = props.id)}}">Details</a><td>
+        <a class='btn btn-default' href="{{url_for('index')}}"><span class ="glyphicon glyphicon-remove"></span></a><td>
+    </tr>
+ </tbody>
+</table>
 
 <h2>Update connection settings</h2>
 <div class="row">

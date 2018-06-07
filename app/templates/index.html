@@ -29,6 +29,7 @@
       <td>
         <a class='btn btn-default' href="{{url_for('change_arduino', ard_nr = ard.id)}}">Config</a>
         <a class='btn btn-default' href="{{url_for('details', ard_nr = ard.id)}}">Details</a><td>
+        <a class='btn btn-default' href="{{url_for('index')}}"><span class ="glyphicon glyphicon-remove"></span></a><td>
     </tr>
     {% endfor %}
  </tbody>
