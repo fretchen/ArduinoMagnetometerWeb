@@ -1,11 +1,12 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, FileField, IntegerField, FloatField
+from wtforms import StringField, SubmitField, FileField, IntegerField, FloatField, HiddenField
 from wtforms.validators import DataRequired, ValidationError, NumberRange
 
 class UpdateForm(FlaskForm):
     '''
     The form for connecting to the Arduino
     '''
+    id = HiddenField('A hidden field')
     serial_port = StringField('Update to port:', validators=[DataRequired()])
     submit = SubmitField('Update port')
 

@@ -29,6 +29,7 @@ class SerialSocketProtocol(object):
     switch = False
     unit_of_work = 0
     name = ''
+    id = 0
 
     def __init__(self, socketio):
         """
@@ -157,6 +158,19 @@ def index():
     dform = DisconnectForm();
     return render_template('index.html', dform = dform, conn_open = conn_open)
 
+@app.route('/overview')
+def overview():
+    '''
+    The  function summarizing the status of each Arduino.
+    '''
+    global arduinos
+    n_ards = len(arduinos);
+    props = [];
+    for arduino in arduinos:
+        dict = {'name': arduino.name, 'port': arduino.serial.port};
+        props.append(dict)
+    return render_template('status_overview.html', n_ards = n_ards, props = props)
+
 @app.context_processor
 def git_url():
     '''
@@ -176,27 +190,49 @@ def config():
         cform = ConnectForm()
         port = app.config['SERIAL_PORT']
         return render_template('add_arduino.html', port = port, cform = cform);
-    n_ards = len(arduinos)
-    port = app.config['SERIAL_PORT']
+
+    n_ards = len(arduinos);
+    props = [];
+    for ii, arduino in enumerate(arduinos):
+        dict = {'name': arduino.name, 'id': ii};
+        props.append(dict)
+
+    return render_template('config.html',n_ards = n_ards, props = props);
+
+@app.route('/change_arduino/<ard_nr>')
+def change_arduino(ard_nr):
+    '''
+    Change the parameters of a specific arduino
+    '''
+    global arduinos;
+    if not arduinos:
+        flash('No arduinos installed', 'error')
+        return redirect(url_for('config'))
+
+    n_ards = len(arduinos);
+    props = [];
+    for ii, arduino in enumerate(arduinos):
+        dict = {'name': arduino.name, 'id': ii};
+        props.append(dict)
+    arduino = arduinos[int(ard_nr)];
+    name = arduino.name;
+    port = arduino.serial.port;
+    conn_open = arduino.connection_open()
+
     dform = DisconnectForm()
     cform = ReConnectForm()
 
-    uform = UpdateForm()
+    uform = UpdateForm(id=ard_nr)
     wform = SerialWaitForm()
 
     arduino_form = UpdateArduinoForm()
     gform = UpdateGainForm()
     iform = UpdateIntegralForm()
     diff_form = UpdateDifferentialForm()
+    return render_template('change_arduino.html', port = port, name = name, ard_nr = ard_nr,
+        form=uform, dform = dform, cform = cform, conn_open = conn_open, arduino_form = arduino_form,
+        gform = gform, iform = iform,diff_form = diff_form, wform = wform, props=props);
 
-    if arduinos:
-        ssProto = arduinos[0];
-        conn_open = ssProto.connection_open()
-    else:
-        conn_open = False;
-    return render_template('config.html', port = port, form=uform, dform = dform,
-        cform = cform, conn_open = conn_open, arduino_form = arduino_form,
-        gform = gform, iform = iform,diff_form = diff_form, wform = wform, n_ards = n_ards);
 
 
 @app.route('/add_arduino', methods=['GET', 'POST'])
@@ -285,10 +321,12 @@ def update():
         flash('Create an arduino first.', 'error');
         return redirect(url_for('config'));
 
-    ssProto = arduinos[0];
     uform = UpdateForm();
 
     if uform.validate_on_submit():
+
+        id =  uform.id.data;
+        ssProto = arduinos[int(id)];
         n_port =  uform.serial_port.data;
         try:
             if ssProto.connection_open():

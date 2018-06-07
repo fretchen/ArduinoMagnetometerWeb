@@ -2,7 +2,6 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
-You have currently {{ n_ards }} arduinos that you might connect too.
 <a class="btn btn-default" id="add_arduino" href="{{url_for('add_arduino')}}"> Add another Arduino.</a>
 
 <div class="dropdown">
@@ -13,6 +12,38 @@ You have currently {{ n_ards }} arduinos that you might connect too.
       <li> <a href="{{url_for('change_arduino', ard_nr = ard.id)}}">#{{ ard.id }} - {{ ard.name }} </a></li>
     {% endfor %}
  </ul>
+</div>
+<h1> Change parameters for # {{ard_nr}} - {{ name }} - listening on {{ port }}</h1>
+
+<div class="container">
+  <div class="row">
+    {% if conn_open %}
+    <div class="col bg-success">The connection is established. </div>
+    <div class="col"> {{ wtf.quick_form(dform, id="stop", action="/stop") }} </div>
+    {% else %}
+    <div class="col bg-warning">The connection is closed.</div>
+    <div class="col-sm"> {{ wtf.quick_form(cform, id="connect", action="/start") }} </div>
+    {% endif %}
+  </div>
+
+<h2>Update connection settings</h2>
+<div class="row">
+  <div class="col"> {{ wtf.quick_form(form, action="/update") }}</div>
+</div>
+
+<h2>Update control parameters </h2>
+<div class="row">
+    <div class="col"> {{ wtf.quick_form(arduino_form, action="/arduino") }}</div>
+  </div>
+  <div class="row">
+      <div class="col"> {{ wtf.quick_form(gform, action="/gain") }}</div>
+  </div>
+  <div class="row">
+      <div class="col"> {{ wtf.quick_form(iform, action="/integral") }}</div>
+  </div>
+  <div class="row">
+      <div class="col"> {{ wtf.quick_form(diff_form, action="/diff") }}</div>
+  </div>
 </div>
 {% endblock %}
 
