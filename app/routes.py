@@ -16,7 +16,7 @@ import eventlet
 import numpy as np
 from datetime import datetime
 
-ssProto = None
+arduinos = [];
 ard_str = '';
 
 class SerialSocketProtocol(object):
@@ -72,6 +72,7 @@ class SerialSocketProtocol(object):
             else:
                 self.switch = True
                 thread = self.socketio.start_background_task(target=self.do_work)
+                print('Started')
         else:
             print('Already running')
 
@@ -97,12 +98,14 @@ class SerialSocketProtocol(object):
 
             if self.is_open():
                 try:
-                    timestamp, ard_str = get_arduino_data()
+                    print('Trying to get data.')
+                    timestamp, ard_str = self.pull_data()
 
                     vals = ard_str.split(',');
                     self.socketio.emit('log_response',
                     {'time':timestamp, 'data': vals, 'count': self.unit_of_work})
                 except Exception as e:
+                    print('{}'.format(e))
                     self.socketio.emit('my_response',
                     {'data': '{}'.format(e), 'count': self.unit_of_work})
                     self.switch = False
@@ -116,8 +119,29 @@ class SerialSocketProtocol(object):
                 # important to use eventlet's sleep method
             eventlet.sleep(app.config['SERIAL_TIME'])
 
+    def pull_data(self):
+        '''
+        Pulling the actual data from the arduino.
+        '''
+        global ard_str;
+        ser = self.serial;
+        # only read out on ask
+        o_str = 'w'
+        b = o_str.encode()
+        ser.write(b);
+        stream = ser.read(ser.in_waiting);
+        ard_str = stream.decode(encoding='windows-1252');
+        timestamp = datetime.now().replace(microsecond=0).isoformat();
+        return timestamp, ard_str
 
-ssProto = SerialSocketProtocol(socketio)
+def get_ssProto():
+    global arduinos;
+    if arduinos:
+        return arduinos[0];
+    else:
+        return None;
+
+#ssProto = SerialSocketProtocol(socketio)
 
 @app.route('/')
 @app.route('/index', methods=['GET', 'POST'])
@@ -125,8 +149,14 @@ def index():
     '''
     The main function for rendering the principal site.
     '''
-    global ssProto
-    conn_open = ssProto.connection_open()
+    global arduinos
+    if arduinos:
+        ssProto = arduinos[0];#TODO has to be cleaned up.
+        conn_open = ssProto.connection_open()
+        print(arduinos[0].is_open())
+    else:
+        print('No arduino connected yet')
+        conn_open = False
     dform = DisconnectForm();
     return render_template('index.html', dform = dform, conn_open = conn_open)
 
@@ -156,8 +186,12 @@ def config():
     iform = UpdateIntegralForm()
     diff_form = UpdateDifferentialForm()
 
-    global ssProto;
-    conn_open = ssProto.connection_open()
+    global arduinos;
+    if arduinos:
+        ssProto = arduinos[0];
+        conn_open = ssProto.connection_open()
+    else:
+        conn_open = False;
 
     return render_template('config.html', port = port, form=uform, dform = dform,
         cform = cform, conn_open = conn_open, arduino_form = arduino_form,
@@ -168,7 +202,12 @@ def start():
 
     cform = ConnectForm()
 
-    global ssProto;
+    global arduinos;
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino connection existing yet', 'error')
+        return redirect(url_for('config'))
 
     if cform.validate_on_submit():
         try:
@@ -185,7 +224,11 @@ def start():
 @app.route('/stop', methods=['POST'])
 def stop():
     dform = DisconnectForm()
-    global ssProto;
+    global arduinos;
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('Nothing to disconnect from', 'error')
 
     if dform.validate_on_submit():
         #Disconnect the port.
@@ -203,7 +246,12 @@ def update():
     Update the serial port.
     '''
     uform = UpdateForm()
-    global ssProto
+    global arduinos;
+
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        ssProto = SerialSocketProtocol(socketio)
 
     if uform.validate_on_submit():
         n_port =  uform.serial_port.data;
@@ -213,7 +261,13 @@ def update():
             ssProto.start()
             if ssProto.is_open():
                 app.config['SERIAL_PORT'] = n_port;
-                flash('We set the serial port to {}'.format(app.config['SERIAL_PORT']))
+                if not arduinos:
+                    arduinos.append(ssProto)
+                    print('We created a new connection, which is {}'.format(arduinos[0].connection_open()))
+                    flash('We created a new connection on {}'.format(app.config['SERIAL_PORT']))
+                else:
+                    flash('We updated the serial port too {}'.format(app.config['SERIAL_PORT']))
+
                 return redirect(url_for('index'))
             else:
                  flash('Update of the serial port went wrong', 'error')
@@ -231,7 +285,12 @@ def arduino():
     Configure now settings for the arduino.
     '''
     aform = UpdateArduinoForm()
-    global ssProto
+    global arduinos
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino yet.', 'error')
+        return redirect(url_for('config'))
 
     if aform.validate_on_submit():
         n_setpoint =  aform.setpoint.data;
@@ -267,7 +326,12 @@ def gain():
     Configure the new gain for the arduino.
     '''
     gform = UpdateGainForm()
-    global ssProto
+    global arduinos
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino yet.', 'error')
+        return redirect(url_for('config'))
 
     if gform.validate_on_submit():
         n_gain =  gform.gain.data;
@@ -302,7 +366,12 @@ def integral():
     Configure the new gain for the arduino.
     '''
     iform = UpdateIntegralForm()
-    global ssProto
+    global arduinos
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino yet.', 'error')
+        return redirect(url_for('config'))
 
     if iform.validate_on_submit():
         n_tau =  iform.tau.data;
@@ -336,7 +405,12 @@ def diff():
     Configure the new gain for the arduino.
     '''
     diff_form = UpdateDifferentialForm()
-    global ssProto
+    global arduinos
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino yet.', 'error')
+        return redirect(url_for('config'))
 
     if diff_form.validate_on_submit():
         n_tau =  diff_form.tau.data;
@@ -388,22 +462,6 @@ def file(filename):
     return render_template('file.html', file = filename, vals = vals)
 
 # communication with the websocket
-def get_arduino_data():
-    '''
-    A function to create test data for plotting.
-    '''
-    global ssProto;
-    global ard_str;
-    ser = ssProto.serial;
-    # only read out on ask
-    o_str = 'w'
-    b = o_str.encode()
-    ssProto.serial.write(b);
-    stream = ser.read(ser.in_waiting);
-    ard_str = stream.decode(encoding='windows-1252');
-    timestamp = datetime.now().replace(microsecond=0).isoformat();
-    return timestamp, ard_str
-
 @socketio.on('connect')
 def run_connect():
     '''
@@ -415,13 +473,21 @@ def run_connect():
 @socketio.on('stop')
 def run_disconnect():
     print('Should disconnect')
+
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-        {'data': 'Disconnected!', 'count': session['receive_count']})
-    global ssProto;
-    ser = ssProto.serial;
-    ser.close();
-    ssProto.stop();
+
+    global arduinos;
+    # we should even kill the arduino properly.
+    if arduinos:
+        ssProto = arduinos[0];
+        ser = ssProto.serial;
+        ser.close();
+        ssProto.stop();
+        emit('my_response',
+            {'data': 'Disconnected!', 'count': session['receive_count']})
+    else:
+        emit('my_response',
+            {'data': 'Nothing to disconnect', 'count': session['receive_count']})
 
 @socketio.on('my_ping')
 def ping_pong():
