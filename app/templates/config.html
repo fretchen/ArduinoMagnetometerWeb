@@ -2,6 +2,8 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
+You have currently {{ n_ards }} arduinos connected.
+{% if n_ards %}
 <div class="container">
   <div class="row">
     {% if conn_open %}
@@ -12,13 +14,16 @@
     <div class="col-sm"> {{ wtf.quick_form(cform, id="connect", action="/start") }} </div>
     {% endif %}
   </div>
-
-<h1>Update connection settings</h1>
+{% endif %}
+{% if not n_ards %}
+<h1>Connect an Arduino</h1>
 <div class="row">
-  <div class="col">We are currently listening for the Arduino on port: {{ port }}</div>
+  <div class="col">We should connect him on a serial port like: {{ port }}</div>
   <div class="col"> {{ wtf.quick_form(form, action="/update") }}</div>
 </div>
+{% endif %}
 
+{% if n_ards %}
 <h1>Update settings on the Arduino</h1>
 <div class="row">
     <div class="col"> {{ wtf.quick_form(arduino_form, action="/arduino") }}</div>
@@ -33,6 +38,7 @@
       <div class="col"> {{ wtf.quick_form(diff_form, action="/diff") }}</div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 

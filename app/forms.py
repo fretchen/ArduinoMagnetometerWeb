@@ -52,6 +52,14 @@ class DisconnectForm(FlaskForm):
 
 class ConnectForm(FlaskForm):
     '''
-    The form for disconnecting from the Arduino
+    The form for connecting to the Arduino
+    '''
+    serial_port = StringField('Connect on port:', validators=[DataRequired()], description = 'Serial port')
+    name = StringField('Name of the Arduino:', description = 'Name', default = 'Arduino')
+    submit = SubmitField('Connect')
+
+class ReConnectForm(FlaskForm):
+    '''
+    The form for recconnecting to the Arduino
     '''
     submit = SubmitField('Connect')

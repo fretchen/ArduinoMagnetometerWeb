@@ -134,15 +134,6 @@ class SerialSocketProtocol(object):
         timestamp = datetime.now().replace(microsecond=0).isoformat();
         return timestamp, ard_str
 
-def get_ssProto():
-    global arduinos;
-    if arduinos:
-        return arduinos[0];
-    else:
-        return None;
-
-#ssProto = SerialSocketProtocol(socketio)
-
 @app.route('/')
 @app.route('/index', methods=['GET', 'POST'])
 def index():
@@ -174,6 +165,12 @@ def git_url():
 
 @app.route('/config')
 def config():
+    global arduinos;
+    if not arduinos:
+        cform = ConnectForm()
+        port = app.config['SERIAL_PORT']
+        return render_template('add_arduino.html', port = port, cform = cform);
+    n_ards = len(arduinos)
     port = app.config['SERIAL_PORT']
     dform = DisconnectForm()
     cform = ConnectForm()
@@ -186,16 +183,48 @@ def config():
     iform = UpdateIntegralForm()
     diff_form = UpdateDifferentialForm()
 
-    global arduinos;
     if arduinos:
         ssProto = arduinos[0];
         conn_open = ssProto.connection_open()
     else:
         conn_open = False;
-
     return render_template('config.html', port = port, form=uform, dform = dform,
         cform = cform, conn_open = conn_open, arduino_form = arduino_form,
-        gform = gform, iform = iform,diff_form = diff_form, wform = wform);
+        gform = gform, iform = iform,diff_form = diff_form, wform = wform, n_ards = n_ards);
+
+
+@app.route('/add_arduino', methods=['POST'])
+def add_arduino():
+    '''
+    Add an arduino to the set up
+    '''
+    global arduinos;
+    cform = ConnectForm();
+
+    if arduinos:
+        flash('We already have an arduino installed.', 'error')
+        return redirect(url_for('config'))
+
+    if cform.validate_on_submit():
+        ssProto = SerialSocketProtocol(socketio)
+        n_port =  cform.serial_port.data;
+        try:
+            ssProto.open_serial(n_port, 9600, timeout = 1)
+            ssProto.start()
+            if ssProto.is_open():
+                app.config['SERIAL_PORT'] = n_port;
+                arduinos.append(ssProto)
+                flash('We added a new arduino {}'.format(app.config['SERIAL_PORT']))
+                return redirect(url_for('index'))
+            else:
+                 flash('Adding the Arduino went wrong', 'error')
+                 return redirect(url_for('config'))
+        except Exception as e:
+             flash('{}'.format(e), 'error')
+             return redirect(url_for('config'))
+    else:
+        flash('Adding the Arduino went wrong', 'error')
+        return redirect(url_for('config'))
 
 @app.route('/start', methods=['POST'])
 def start():
