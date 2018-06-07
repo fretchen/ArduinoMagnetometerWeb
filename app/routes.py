@@ -142,6 +142,17 @@ class SerialSocketProtocol(object):
         timestamp = datetime.now().replace(microsecond=0).isoformat();
         return timestamp, ard_str
 
+@app.context_processor
+def git_url():
+    '''
+    The main function for rendering the principal site.
+    '''
+    repo = git.Repo(search_parent_directories=True)
+    add =repo.remote().url
+    add_c = add.split('.git')[0];
+    comm = repo.head.object.hexsha;
+    return dict(git_url = add_c + '/tree/' + comm);
+
 @app.route('/')
 @app.route('/index', methods=['GET', 'POST'])
 def index():
@@ -149,14 +160,39 @@ def index():
     The main function for rendering the principal site.
     '''
     global arduinos
-    if arduinos:
-        ssProto = arduinos[0];#TODO has to be cleaned up.
-        conn_open = ssProto.connection_open()
-    else:
-        print('No arduino connected yet')
-        conn_open = False
-    dform = DisconnectForm();
-    return render_template('index.html', dform = dform, conn_open = conn_open)
+
+    n_ards = len(arduinos);
+    props = [];
+    for ii, arduino in enumerate(arduinos):
+        dict = {'name': arduino.name, 'id': ii, 'port': arduino.serial.port,
+        'active': arduino.connection_open()};
+        props.append(dict)
+
+    return render_template('index.html',n_ards = n_ards, props = props);
+
+
+@app.route('/details/<ard_nr>', methods=['GET', 'POST'])
+def details(ard_nr):
+    '''
+    The main function for rendering the principal site.
+    '''
+    global arduinos;
+    if not arduinos:
+        flash('No arduinos installed', 'error')
+        return redirect(url_for('index'))
+
+    n_ards = len(arduinos);
+    props = [];
+    for ii, arduino in enumerate(arduinos):
+        dict = {'name': arduino.name, 'id': ii};
+        props.append(dict)
+
+    arduino = arduinos[int(ard_nr)];
+    name = arduino.name;
+    port = arduino.serial.port;
+    conn_open = arduino.connection_open()
+    return render_template('details.html',n_ards = n_ards, props = props, ard_nr = ard_nr,
+        name = name, conn_open = conn_open);
 
 @app.route('/overview')
 def overview():
@@ -170,18 +206,6 @@ def overview():
         dict = {'name': arduino.name, 'port': arduino.serial.port};
         props.append(dict)
     return render_template('status_overview.html', n_ards = n_ards, props = props)
-
-@app.context_processor
-def git_url():
-    '''
-    The main function for rendering the principal site.
-    '''
-    repo = git.Repo(search_parent_directories=True)
-    add =repo.remote().url
-    add_c = add.split('.git')[0];
-    comm = repo.head.object.hexsha;
-    return dict(git_url = add_c + '/tree/' + comm);
-
 
 @app.route('/config')
 def config():
@@ -232,8 +256,6 @@ def change_arduino(ard_nr):
     return render_template('change_arduino.html', port = port, name = name, ard_nr = ard_nr,
         form=uform, dform = dform, cform = cform, conn_open = conn_open, arduino_form = arduino_form,
         gform = gform, iform = iform,diff_form = diff_form, wform = wform, props=props);
-
-
 
 @app.route('/add_arduino', methods=['GET', 'POST'])
 def add_arduino():
@@ -373,7 +395,7 @@ def arduino():
     else:
         port = app.config['SERIAL_PORT']
 
-        uform = UpdateForm()
+        uform = Form()
 
         wform = SerialWaitForm()
         dform = DisconnectForm()
