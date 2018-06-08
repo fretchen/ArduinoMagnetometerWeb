@@ -194,12 +194,18 @@ def details(ard_nr):
         return redirect(url_for('index'))
 
     n_ards = len(arduinos);
-    props = [];
-    for ii, arduino in enumerate(arduinos):
-        dict = {'name': arduino.name, 'id': ii};
-        props.append(dict)
 
     arduino = arduinos[int(ard_nr)];
+    n_ards = len(arduinos);
+    props = [];
+    for ii, arduino in enumerate(arduinos):
+        # create also the name for the readout field of the temperature
+        temp_field_str = 'read' + str(arduino.id);
+        dict = {'name': arduino.name, 'id': arduino.id, 'port': arduino.serial.port,
+        'active': arduino.connection_open(), 'setpoint': arduino.setpoint,
+        'label': temp_field_str};
+        props.append(dict)
+
     name = arduino.name;
     port = arduino.serial.port;
     conn_open = arduino.connection_open()
