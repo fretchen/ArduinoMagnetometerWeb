@@ -216,21 +216,42 @@ def overview():
         props.append(dict)
     return render_template('status_overview.html', n_ards = n_ards, props = props)
 
-@app.route('/config')
-def config():
+@app.route('/add_arduino', methods=['GET', 'POST'])
+def add_arduino():
+    '''
+    Add an arduino to the set up
+    '''
     global arduinos;
-    if not arduinos:
-        cform = ConnectForm()
-        port = app.config['SERIAL_PORT']
-        return render_template('add_arduino.html', port = port, cform = cform);
+    cform = ConnectForm();
 
-    n_ards = len(arduinos);
-    props = [];
-    for ii, arduino in enumerate(arduinos):
-        dict = {'name': arduino.name, 'id': ii};
-        props.append(dict)
+    if cform.validate_on_submit():
+        n_port =  cform.serial_port.data;
+        name = cform.name.data;
+        ssProto = SerialSocketProtocol(socketio, name);
+        ssProto.id = len(arduinos)
+        try:
+            ssProto.open_serial(n_port, 9600, timeout = 1)
+            ssProto.start()
+            if ssProto.is_open():
+                app.config['SERIAL_PORT'] = n_port;
+                arduinos.append(ssProto)
+                flash('We added a new arduino {}'.format(app.config['SERIAL_PORT']))
+                return redirect(url_for('index'))
+            else:
+                 flash('Adding the Arduino went wrong', 'error')
+                 return redirect(url_for('add_arduino'))
+        except Exception as e:
+             flash('{}'.format(e), 'error')
+             return redirect(url_for('add_arduino'))
 
-    return render_template('config.html',n_ards = n_ards, props = props);
+    port = app.config['SERIAL_PORT']
+    n_ards = len(arduinos)
+    return render_template('add_arduino.html', port = port, cform = cform, n_ards=n_ards);
+
+def change_arduino_param(ard_nr):
+    '''
+    The function, which allows to combine the different views
+    '''
 
 @app.route('/change_arduino/<ard_nr>')
 def change_arduino(ard_nr):
@@ -260,158 +281,92 @@ def change_arduino(ard_nr):
         form=uform, dform = dform, cform = cform,  sform = sform,
         gform = gform, iform = iform,diff_form = diff_form, wform = wform, props=props);
 
-@app.route('/add_arduino', methods=['GET', 'POST'])
-def add_arduino():
-    '''
-    Add an arduino to the set up
-    '''
-    global arduinos;
-    cform = ConnectForm();
-
-    if cform.validate_on_submit():
-        n_port =  cform.serial_port.data;
-        name = cform.name.data;
-        ssProto = SerialSocketProtocol(socketio, name);
-        ssProto.id = len(arduinos)
-        try:
-            ssProto.open_serial(n_port, 9600, timeout = 1)
-            ssProto.start()
-            if ssProto.is_open():
-                app.config['SERIAL_PORT'] = n_port;
-                arduinos.append(ssProto)
-                flash('We added a new arduino {}'.format(app.config['SERIAL_PORT']))
-                return redirect(url_for('index'))
-            else:
-                 flash('Adding the Arduino went wrong', 'error')
-                 return redirect(url_for('config'))
-        except Exception as e:
-             flash('{}'.format(e), 'error')
-             return redirect(url_for('config'))
-
-    port = app.config['SERIAL_PORT']
-    n_ards = len(arduinos)
-    return render_template('add_arduino.html', port = port, cform = cform, n_ards=n_ards);
-
-@app.route('/start', methods=['POST'])
-def start():
-
-    cform = ReConnectForm()
-
-    global arduinos;
-    if arduinos:
-        ssProto = arduinos[0];
-    else:
-        flash('No arduino connection existing yet', 'error')
-        return redirect(url_for('config'))
-
-    if cform.validate_on_submit():
-        try:
-            ssProto.open_serial(app.config['SERIAL_PORT'], 9600, timeout = 1)
-            ssProto.start()
-            flash('Started the connection')
-            return redirect(url_for('index'))
-        except Exception as e:
-            flash('{}'.format(e), 'error')
-            return redirect(url_for('config'))
-
-    return redirect(url_for('config'))
-
-@app.route('/stop', methods=['POST'])
-def stop():
-    dform = DisconnectForm()
-    global arduinos;
-    if arduinos:
-        ssProto = arduinos[0];
-    else:
-        flash('Nothing to disconnect from', 'error')
-
-    if dform.validate_on_submit():
-        #Disconnect the port.
-        ssProto.stop()
-        ssProto.serial.close()
-
-        flash('Closed the serial connection')
-        return redirect(url_for('config'))
-
-    return redirect(url_for('config'))
-
 @app.route('/update', methods=['POST'])
 def update():
     '''
     Update the serial port.
     '''
-    global arduinos;
-
+    global arduinos
     if not arduinos:
-        flash('Create an arduino first.', 'error');
-        return redirect(url_for('config'));
+        flash('No arduino yet.', 'error')
+        return redirect(url_for('add_arduino'))
 
+    sform = UpdateSetpointForm();
     uform = UpdateForm();
+    wform = SerialWaitForm()
+    dform = DisconnectForm()
+    cform = ReConnectForm()
+    gform = UpdateGainForm()
+    iform = UpdateIntegralForm()
+    diff_form = UpdateDifferentialForm()
+
+    id = int(uform.id.data);
+    arduino = arduinos[id];
 
     if uform.validate_on_submit():
 
-        id =  uform.id.data;
-        ssProto = arduinos[int(id)];
+        arduino = arduinos[int(id)];
         n_port =  uform.serial_port.data;
         try:
-            if ssProto.connection_open():
-                ssProto.stop()
-            ssProto.open_serial(n_port, 9600, timeout = 1)
-            ssProto.start()
-            if ssProto.is_open():
-                app.config['SERIAL_PORT'] = n_port;
-                flash('We updated the serial port too {}'.format(app.config['SERIAL_PORT']))
-                return redirect(url_for('index'))
+            if arduino.connection_open():
+                arduino.stop()
+            arduino.open_serial(n_port, 9600, timeout = 1)
+            arduino.start()
+            if arduino.is_open():
+                flash('We updated the serial to {}'.format(n_port))
             else:
-                 flash('Update of the serial port went wrong', 'error')
-                 return redirect(url_for('config'))
+                flash('Update of the serial port went wrong.', 'error')
         except Exception as e:
              flash('{}'.format(e), 'error')
-             return redirect(url_for('config'))
+        return redirect(url_for('change_arduino', ard_nr = id))
     else:
-        flash('Update of the serial port went wrong', 'error')
-        return redirect(url_for('config'))
+        props = {'name': arduino.name, 'id': id, 'port': arduino.serial.port,
+            'active': arduino.connection_open(), 'setpoint': arduino.setpoint};
+
+        return render_template('change_arduino.html', form=uform, dform = dform,
+            cform = cform,  sform = sform, gform = gform, iform = iform,
+            diff_form = diff_form, wform = wform, props=props);
 
 @app.route('/setpoint', methods=['POST'])
 def arduino():
     '''
     Configure now settings for the arduino.
     '''
-    sform = UpdateSetpointForm()
     global arduinos
     if not arduinos:
         flash('No arduino yet.', 'error')
-        return redirect(url_for('config'))
+        return redirect(url_for('add_arduino'))
+
+    sform = UpdateSetpointForm();
+    uform = UpdateForm();
+    wform = SerialWaitForm()
+    dform = DisconnectForm()
+    cform = ReConnectForm()
+    gform = UpdateGainForm()
+    iform = UpdateIntegralForm()
+    diff_form = UpdateDifferentialForm()
 
     id = int(sform.id.data);
+    arduino = arduinos[id];
+
     if sform.validate_on_submit():
         n_setpoint =  sform.setpoint.data;
-        ssProto = arduinos[id];
-        if ssProto.is_open():
+        if arduino.is_open():
             o_str = 's{}'.format(n_setpoint)
             b = o_str.encode()
-            ssProto.serial.write(b)
-            ssProto.setpoint = n_setpoint;
+            arduino.serial.write(b)
+            arduino.setpoint = n_setpoint;
             flash('We set the setpoint to {}'.format(n_setpoint))
         else:
             flash('Serial port not open.', 'error')
-        return redirect(url_for('config'))
+        return redirect(url_for('change_arduino', ard_nr = id))
     else:
-        port = app.config['SERIAL_PORT']
+        props = {'name': arduino.name, 'id': id, 'port': arduino.serial.port,
+            'active': arduino.connection_open(), 'setpoint': arduino.setpoint};
 
-        uform = UpdateForm()
-        wform = SerialWaitForm()
-        dform = DisconnectForm()
-        cform = ReConnectForm()
-        gform = UpdateGainForm()
-        iform = UpdateIntegralForm()
-        diff_form = UpdateDifferentialForm()
-
-        conn_open = ssProto.connection_open()
-
-        return render_template('config.html', port = port, form=uform, dform = dform,
-            cform = cform, conn_open = conn_open, sform = sform,
-            gform = gform, iform = iform, diff_form = diff_form, wform = wform)
+        return render_template('change_arduino.html', form=uform, dform = dform,
+            cform = cform,  sform = sform, gform = gform, iform = iform,
+            diff_form = diff_form, wform = wform, props=props);
 
 @app.route('/gain', methods=['POST'])
 def gain():
@@ -530,6 +485,49 @@ def diff():
         return render_template('config.html', port = port, form=uform, dform = dform,
             cform = cform, conn_open = conn_open, sform = sform,
             gform = gform, iform = iform, diff_form = diff_form, wform = wform)
+
+@app.route('/start', methods=['POST'])
+def start():
+
+    cform = ReConnectForm()
+
+    global arduinos;
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('No arduino connection existing yet', 'error')
+        return redirect(url_for('add_arduino'))
+
+    if cform.validate_on_submit():
+        try:
+            ssProto.open_serial(app.config['SERIAL_PORT'], 9600, timeout = 1)
+            ssProto.start()
+            flash('Started the connection')
+            return redirect(url_for('index'))
+        except Exception as e:
+            flash('{}'.format(e), 'error')
+            return redirect(url_for('config'))
+
+    return redirect(url_for('config'))
+
+@app.route('/stop', methods=['POST'])
+def stop():
+    dform = DisconnectForm()
+    global arduinos;
+    if arduinos:
+        ssProto = arduinos[0];
+    else:
+        flash('Nothing to disconnect from', 'error')
+
+    if dform.validate_on_submit():
+        #Disconnect the port.
+        ssProto.stop()
+        ssProto.serial.close()
+
+        flash('Closed the serial connection')
+        return redirect(url_for('config'))
+
+    return redirect(url_for('config'))
 
 @app.route('/file/<filename>')
 def file(filename):

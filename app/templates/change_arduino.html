@@ -11,7 +11,6 @@
     <th scope="col">Port</th>
     <th scope="col">Status</th>
     <th scope="col">Setpoint</th>
-    <th scope="col">Current Value</th>
     <th scope="col">Other actions </th>
   </tr>
   </thead>
@@ -26,7 +25,6 @@
       <td class="bg-warning">Closed</td>
       {% endif %}
       <td scope="col">{{ props.setpoint }}</td>
-      <td scope="col">Not implemented.</td>
       <td>
         <a class='btn btn-default' href="{{url_for('details', ard_nr = props.id)}}">Details</a><td>
         <a class='btn btn-default' href="{{url_for('index')}}"><span class ="glyphicon glyphicon-remove"></span></a><td>
