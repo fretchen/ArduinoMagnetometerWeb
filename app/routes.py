@@ -28,9 +28,9 @@ class SerialSocketProtocol(object):
     serial = None
     switch = False
     unit_of_work = 0
-    name = ''
+    name = '';
     id = 0;
-    setpoint = 0;
+    setpoint = '';
 
     def __init__(self, socketio):
         """
@@ -111,8 +111,13 @@ class SerialSocketProtocol(object):
                     timestamp, ard_str = self.pull_data()
 
                     vals = ard_str.split(',');
+                    if len(vals)>=2:
+                        self.socketio.emit('temp_value',
+                            {'data': vals[1], 'id': self.id})
+
                     self.socketio.emit('log_response',
-                    {'time':timestamp, 'data': vals, 'count': self.unit_of_work})
+                    {'time':timestamp, 'data': vals, 'count': self.unit_of_work,
+                        'id': self.id})
                 except Exception as e:
                     print('{}'.format(e))
                     self.socketio.emit('my_response',
@@ -165,8 +170,11 @@ def index():
     n_ards = len(arduinos);
     props = [];
     for ii, arduino in enumerate(arduinos):
-        dict = {'name': arduino.name, 'id': ii, 'port': arduino.serial.port,
-        'active': arduino.connection_open(), 'setpoint': arduino.setpoint};
+        # create also the name for the readout field of the temperature
+        temp_field_str = 'read' + str(arduino.id);
+        dict = {'name': arduino.name, 'id': arduino.id, 'port': arduino.serial.port,
+        'active': arduino.connection_open(), 'setpoint': arduino.setpoint,
+        'label': temp_field_str};
         props.append(dict)
 
     return render_template('index.html',n_ards = n_ards, props = props);
@@ -264,7 +272,7 @@ def add_arduino():
         n_port =  cform.serial_port.data;
         name = cform.name.data;
         ssProto = SerialSocketProtocol(socketio, name);
-
+        ssProto.id = len(arduinos)
         try:
             ssProto.open_serial(n_port, 9600, timeout = 1)
             ssProto.start()

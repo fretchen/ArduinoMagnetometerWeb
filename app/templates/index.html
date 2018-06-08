@@ -24,8 +24,8 @@
       {% else %}
       <td class="bg-warning">Closed</td>
       {% endif %}
-      <td scope="col">{{ ard.setpoint }}</td>
-      <td scope="col">Not implemented.</td>
+      <td>{{ ard.setpoint }}</td>
+      <td id ='{{ ard.label}}'>Not implemented.</td>
       <td>
         <a class='btn btn-default' href="{{url_for('change_arduino', ard_nr = ard.id)}}">Config</a>
         <a class='btn btn-default' href="{{url_for('details', ard_nr = ard.id)}}">Details</a><td>
@@ -62,6 +62,15 @@ $(document).ready(function() {
   socket.on('my_response', function(msg) {
     $('#log').prepend('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
   });
+
+  socket.on('temp_value', function(msg) {
+    var temp = msg.data;
+    var id = msg.id;
+    var el_name = '#read' + msg.id;
+    console.log(el_name);
+    $(el_name).html(temp);
+  });
+
 
   // Interval function that tests message latency by sending a "ping"
   var ping_pong_times = [];
