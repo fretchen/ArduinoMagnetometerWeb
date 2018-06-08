@@ -27,22 +27,25 @@ class UpdateSetpointForm(FlaskForm):
 
 class UpdateGainForm(FlaskForm):
     '''
-    The form for connecting to the Arduino
+    The form for updateing the gain of the Arduino
     '''
+    id = HiddenField('A hidden field');
     gain = FloatField('New gain:', [DataRequired(), NumberRange(0)])
     submit = SubmitField('Update gain')
 
 class UpdateIntegralForm(FlaskForm):
     '''
-    The form for connecting to the Arduino
+    The form for updating the integral part to the Arduino
     '''
+    id = HiddenField('A hidden field');
     tau = FloatField('New tauI in seconds:', [DataRequired(), NumberRange(1)])
     submit = SubmitField('Update time constant')
 
 class UpdateDifferentialForm(FlaskForm):
     '''
-    The form for connecting to the Arduino
+    The form for updating the differential part of the Arduino
     '''
+    id = HiddenField('A hidden field');
     tau = FloatField('New tauD in seconds:', [DataRequired(), NumberRange(0)])
     submit = SubmitField('Update tauD')
 
@@ -50,12 +53,14 @@ class DisconnectForm(FlaskForm):
     '''
     The form for disconnecting from the Arduino
     '''
+    id = HiddenField('A hidden field');
     submit = SubmitField('Disconnect')
 
 class ConnectForm(FlaskForm):
     '''
     The form for connecting to the Arduino
     '''
+    id = HiddenField('A hidden field');
     serial_port = StringField('Connect on port:', validators=[DataRequired()], description = 'Serial port')
     name = StringField('Name of the Arduino:', description = 'Name', default = 'Arduino')
     submit = SubmitField('Connect')
@@ -64,4 +69,5 @@ class ReConnectForm(FlaskForm):
     '''
     The form for recconnecting to the Arduino
     '''
+    id = HiddenField('A hidden field');
     submit = SubmitField('Connect')
