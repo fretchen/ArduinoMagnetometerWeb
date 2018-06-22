@@ -1,7 +1,7 @@
 from app import app, socketio
 from app.forms import UpdateForm, DisconnectForm, ConnectForm, SerialWaitForm, ReConnectForm, SerialWaitForm
 from app.forms import UpdateSetpointForm, UpdateGainForm, UpdateIntegralForm, UpdateDifferentialForm
-from app.models import SerialArduinoTempControl, SerialArduinoMonitor
+from app.models import SerialArduinoTempControl, SerialArduinoMonitor, serialmonitors, tempcontrols
 import h5py
 import git
 import numpy as np
@@ -13,9 +13,6 @@ from flask_socketio import emit, disconnect
 
 # for subplots
 import numpy as np
-
-tempcontrols = [];
-serialmonitors = [];
 
 @app.context_processor
 def git_url():

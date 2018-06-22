@@ -2,6 +2,9 @@ import serial
 import eventlet
 from datetime import datetime
 
+tempcontrols = [];
+serialmonitors = [];
+
 class SerialArduinoMonitor(object):
     '''
     A class which combines the serial connection and the socket into a single
