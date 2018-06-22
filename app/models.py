@@ -2,6 +2,17 @@ import serial
 import eventlet
 from datetime import datetime
 
+from app import db
+
+class SerialArduinoDB(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(120), index=True, unique=True)
+    password_hash = db.Column(db.String(128))
+
+    def __repr__(self):
+        return '<User {}>'.format(self.username)
+
 class SerialArduinoMonitor(object):
     '''
     A class which combines the serial connection and the socket into a single
@@ -31,7 +42,6 @@ class SerialArduinoMonitor(object):
         self.switch = False
         self.socketio = socketio
         self.name = name;
-
 
     def is_open(self):
         '''
@@ -70,6 +80,7 @@ class SerialArduinoMonitor(object):
             else:
                 self.switch = True
                 thread = self.socketio.start_background_task(target=self.do_work)
+                print(thread)
         else:
             print('Already running')
 
