@@ -14,4 +14,7 @@ socketio = SocketIO(app, async_mode='eventlet')
 
 app.config.from_object(Config)
 
+from app.errors import bp as errors_bp
+app.register_blueprint(errors_bp)
+
 from app import routes

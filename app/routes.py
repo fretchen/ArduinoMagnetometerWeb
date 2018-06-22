@@ -562,9 +562,3 @@ def add_serialmonitor():
     n_ards = len(serialmonitors)
     return render_template('add_arduino.html', port = port, cform = cform, n_ards=n_ards,
     device_type = 'serial monitor');
-
-# error handling
-@app.errorhandler(500)
-def internal_error(error):
-    flash('An error occured {}'.format(error), 'error')
-    return render_template('500.html'), 500
