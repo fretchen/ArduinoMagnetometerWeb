@@ -17,4 +17,7 @@ app.config.from_object(Config)
 from app.errors import bp as errors_bp
 app.register_blueprint(errors_bp)
 
+from app.thermocontrol import bp as thermocontrol_bp
+app.register_blueprint(thermocontrol_bp)
+
 from app import routes

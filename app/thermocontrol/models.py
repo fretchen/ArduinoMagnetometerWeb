@@ -2,9 +2,9 @@ import serial
 import eventlet
 from datetime import datetime
 
-serialmonitors = [];
+tempcontrols = [];
 
-class SerialArduinoMonitor(object):
+class SerialArduinoTempControl(object):
     '''
     A class which combines the serial connection and the socket into a single
     class, such that we can handle these things more properly.
@@ -14,6 +14,10 @@ class SerialArduinoMonitor(object):
     unit_of_work = 0
     name = '';
     id = 0;
+    setpoint = '';
+    diff = None;
+    integral = None;
+    gain = None;
     ard_str = '';
     sleeptime = 3;
 
@@ -97,10 +101,11 @@ class SerialArduinoMonitor(object):
                     timestamp, ard_str = self.pull_data()
 
                     vals = ard_str.split(',');
-                    self.socketio.emit('serial_value',
-                        {'data': ard_str, 'id': self.id})
+                    if len(vals)>=2:
+                        self.socketio.emit('temp_value',
+                            {'data': vals[1], 'id': self.id})
 
-                    self.socketio.emit('serial_log',
+                    self.socketio.emit('log_response',
                     {'time':timestamp, 'data': vals, 'count': self.unit_of_work,
                         'id': self.id})
                 except Exception as e:
