@@ -14,6 +14,11 @@ socketio = SocketIO(app, async_mode='eventlet')
 
 app.config.from_object(Config)
 
+# import all the components of the app
+
+from app.main import bp as main_bp
+app.register_blueprint(main_bp)
+
 from app.errors import bp as errors_bp
 app.register_blueprint(errors_bp)
 
@@ -22,5 +27,3 @@ app.register_blueprint(thermocontrol_bp)
 
 from app.serialmonitor import bp as serialmonitor_bp
 app.register_blueprint(serialmonitor_bp)
-
-from app import routes

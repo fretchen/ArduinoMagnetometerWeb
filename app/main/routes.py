@@ -1,5 +1,5 @@
 from app import app, socketio
-
+from app.main import bp
 from app.thermocontrol.models import tempcontrols
 from app.serialmonitor.models import serialmonitors
 
@@ -24,8 +24,8 @@ def git_url():
     comm = repo.head.object.hexsha;
     return dict(git_url = add_c + '/tree/' + comm);
 
-@app.route('/')
-@app.route('/index', methods=['GET', 'POST'])
+@bp.route('/')
+@bp.route('/index', methods=['GET', 'POST'])
 def index():
     '''
     The main function for rendering the principal site.
@@ -56,50 +56,7 @@ def index():
     return render_template('index.html',n_tcs = n_tcs, tempcontrols = tc_props,
     n_sm = n_sm, serialmonitors = sm_props);
 
-@app.route('/start', methods=['POST'])
-def start():
-
-    cform = ReConnectForm()
-
-    global tempcontrols;
-    if tempcontrols:
-        ssProto = tempcontrols[0];
-    else:
-        flash('No arduino connection existing yet', 'error')
-        return redirect(url_for('add_tempcontrol'))
-
-    if cform.validate_on_submit():
-        try:
-            ssProto.open_serial(app.config['SERIAL_PORT'], 9600, timeout = 1)
-            ssProto.start()
-            flash('Started the connection')
-            return redirect(url_for('index'))
-        except Exception as e:
-            flash('{}'.format(e), 'error')
-            return redirect(url_for('config'))
-
-    return redirect(url_for('config'))
-
-@app.route('/stop', methods=['POST'])
-def stop():
-    dform = DisconnectForm()
-    global tempcontrols;
-    if tempcontrols:
-        ssProto = tempcontrols[0];
-    else:
-        flash('Nothing to disconnect from', 'error')
-
-    if dform.validate_on_submit():
-        #Disconnect the port.
-        ssProto.stop()
-        ssProto.serial.close()
-
-        flash('Closed the serial connection')
-        return redirect(url_for('config'))
-
-    return redirect(url_for('config'))
-
-@app.route('/file/<filestring>')
+@bp.route('/file/<filestring>')
 def file(filestring):
     '''function to save the values of the hdf5 file. It should have the following structure
     <ard_nr>+<filename>

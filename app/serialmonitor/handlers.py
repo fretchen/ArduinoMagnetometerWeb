@@ -27,13 +27,13 @@ def add_serialmonitor():
                 app.config['SERIAL_PORT'] = n_port;
                 serialmonitors.append(ssProto)
                 flash('We added a new arduino {}'.format(app.config['SERIAL_PORT']))
-                return redirect(url_for('index'))
+                return redirect(url_for('main.index'))
             else:
                  flash('Adding the Arduino went wrong', 'error')
-                 return redirect(url_for('add_serialmonitor'))
+                 return redirect(url_for('serialmonitor.add_serialmonitor'))
         except Exception as e:
              flash('{}'.format(e), 'error')
-             return redirect(url_for('add_serialmonitor'))
+             return redirect(url_for('serialmonitor.add_serialmonitor'))
 
     port = app.config['SERIAL_PORT']
     n_ards = len(serialmonitors)

@@ -15,7 +15,7 @@ def details(ard_nr):
     global tempcontrols;
     if not tempcontrols:
         flash('No tempcontrols installed', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('main.index'))
 
     n_ards = len(tempcontrols);
 
@@ -57,13 +57,13 @@ def add_tempcontrol():
                 app.config['SERIAL_PORT'] = n_port;
                 tempcontrols.append(ssProto)
                 flash('We added a new arduino {}'.format(app.config['SERIAL_PORT']))
-                return redirect(url_for('index'))
+                return redirect(url_for('main.index'))
             else:
                  flash('Adding the Arduino went wrong', 'error')
-                 return redirect(url_for('add_tempcontrol'))
+                 return redirect(url_for('thermocontrol.add_tempcontrol'))
         except Exception as e:
              flash('{}'.format(e), 'error')
-             return redirect(url_for('add_tempcontrol'))
+             return redirect(url_for('thermocontrol.add_tempcontrol'))
 
     port = app.config['SERIAL_PORT']
     n_ards = len(tempcontrols)
