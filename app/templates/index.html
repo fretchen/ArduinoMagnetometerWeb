@@ -2,7 +2,7 @@
 {% import 'bootstrap/wtf.html' as wtf %}
 {% block app_content %}
 <a class="btn btn-default" id="add_tempcontrol" href="{{url_for('thermocontrol.add_tempcontrol')}}"> Add another Temp control.</a>
-<a class="btn btn-default" id="add_serialmonitor" href="{{url_for('add_serialmonitor')}}"> Add another serial monitor.</a>
+<a class="btn btn-default" id="add_serialmonitor" href="{{url_for('serialmonitor.add_serialmonitor')}}"> Add another serial monitor.</a>
 {% if n_tcs %}
 <h1> Temp controls </h1>
 <table class="table table-hover" id ="tempcontrols">
